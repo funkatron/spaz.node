@@ -1,9 +1,11 @@
 var http = require('http'),
 	https = require('https'),
 	url = require('url'),
-	sys = require('sys');
+	sys = require('sys'),
+	cache = require('./cache');
   
 var MAX_REDIRECTS = 10;
+var ONE_HOUR = 1000 * 60 * 60;
 
 
 var server = http.createServer(function (req, res) {
@@ -12,23 +14,35 @@ var server = http.createServer(function (req, res) {
 		
 		var passed_url = args.query.url;
 		
-		resolver(passed_url, function(client_resp, last_url, redirects) {
-			
-			var resp_obj = {
-				"passed_url":passed_url,
-				"final_url":last_url,
-				"redirects":redirects
-			};
-			
-			if (client_resp.error) {
-				resp_obj.error = client_resp.error;
-				resp_obj.error_msg = client_resp.message;
-			}
-			
-			
+		var resp_json = '';
+		if ((resp_json = cache.get(passed_url))) {
+			console.log('retrieved "'+passed_url+'" from cache');
 			res.writeHead(200, { "Content-Type": "application/json" });
-			res.end(JSON.stringify(resp_obj)+"\n");
-		});
+			res.end(resp_json);
+		} else {
+			resolver(passed_url, function(client_resp, last_url, redirects) {
+			
+				var resp_obj = {
+					"passed_url":passed_url,
+					"final_url":last_url,
+					"redirects":redirects
+				};
+			
+				if (client_resp.error) {
+					resp_obj.error = client_resp.error;
+					resp_obj.error_msg = client_resp.message;
+				}
+			
+				var json_obj = JSON.stringify(resp_obj);
+			
+				cache.put(passed_url, json_obj, ONE_HOUR);
+			
+				res.writeHead(200, { "Content-Type": "application/json" });
+				res.end(json_obj);
+			});
+		
+		}
+		
 		
 	} else {
 	
