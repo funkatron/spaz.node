@@ -8,8 +8,8 @@ var server = http.createServer(function (req, res) {
 	if (args.query && args.query.url) {
 		var passed_url = args.query.url;
 		resolver(passed_url, function(data, client_resp, last_url) {
-			res.writeHead(200, { "Content-Type": "text/plain" });
-			res.end(passed_url+"=>"+last_url+"\n");
+			res.writeHead(200, { "Content-Type": "application/json" });
+			res.end(JSON.stringify({"passed_url":passed_url, "final_url":last_url})+"\n");
 		});
 	} else {
 		res.writeHead(200, { "Content-Type": "text/plain" });
@@ -31,9 +31,11 @@ var resolver = function(passed_url, cb) {
 	client.get(passed_url)
 		.addListener('error', function (err) {
 			sys.puts('Network Error: ' + sys.inspect(err));
+			cb(null, null, last_url);
 			})
 		.addListener('http-error', function (data, resp) {
 			sys.puts('HTTP Error for: ' + resp.host + ' code: ' + resp.statusCode);
+			cb(null, null, last_url);
 			})
 		.addListener('redirect', function (data, resp) {
 			// sys.puts('Redirecting to: ' + resp.headers['location']);
