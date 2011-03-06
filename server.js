@@ -38,14 +38,14 @@ var resolver = function(passed_url, cb) {
 			cb(null, null, last_url);
 			})
 		.addListener('redirect', function (data, resp) {
-			// sys.puts('Redirecting to: ' + resp.headers['location']);
+			sys.puts('Redirecting to: ' + resp.headers['location']);
 			last_url = resp.headers['location'];
 			// sys.puts('Headers: ' + sys.inspect(resp.headers));
 			})
 		.addListener('success', function (data, resp) {
 			// sys.debug('Got data: ' + data);
-			// sys.puts('Headers: ' + sys.inspect(resp.headers));
-			// console.log(last_url);
+			sys.puts('Headers: ' + sys.inspect(resp.headers));
+			sys.puts(last_url);
 			cb(data, resp, last_url);
 		}).send();
 };
